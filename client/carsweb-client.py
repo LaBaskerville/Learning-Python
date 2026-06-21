@@ -53,6 +53,18 @@ def readcar():
 def updatecar():
     return render_template('updatecar.html', appType=appType)
 
+@app.route('/updatecarsave', methods=['POST'])
+def updatecarsave():
+    fId = request.form.get('id')
+    fName = request.form.get('carName')
+    
+    if fId and fName:
+        datacar = {"id": fId, "carname": fName}
+        # Mengirim request PUT ke server untuk update data
+        requests.put("http://localhost:5012/cars", json=datacar)
+        
+    return redirect(url_for('readcar'))
+
 @app.route('/deletecar')
 def deletecar():
     return render_template('deletecar.html', appType=appType)
@@ -75,9 +87,16 @@ def deletecarsave():
 
     return redirect(url_for('readcar'))
 
-@app.route('/searchcar')
+@app.route('/searchcar', methods=['GET'])
 def searchcar():
-    return render_template('searchcar.html', appType=appType)
+    fName = request.args.get('keyword') 
+    if fName:
+        # Kirim query parameter ke server via GET /cars?keyword=nama_mobil
+        response = requests.get("http://localhost:5012/cars", params={'keyword': fName})
+        hasil_pencarian = response.json()
+    else:
+        hasil_pencarian = []
+    return render_template('searchcar.html', cars=hasil_pencarian, keyword=fName)
 
 if __name__ == '__main__':
     

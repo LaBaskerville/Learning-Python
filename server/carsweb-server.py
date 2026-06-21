@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from peewee import *
 from flask_restful import Resource, Api, reqparse 
 
@@ -42,17 +42,21 @@ def readdata():
 
 class CAR(Resource):
     def get(self):
-        rows = TBCarsWeb.select()    
+        keyword = request.args.get('keyword')
+        if keyword:
+            rows = TBCarsWeb.select().where(TBCarsWeb.carname.contains(keyword))
+        else:
+            rows = TBCarsWeb.select()
+            
         datas=[]
-
         for row in rows:
             datas.append({
-            'id':row.id,
-            'carname':row.carname,
-            'carbrand':row.carbrand,
-            'carmodel':row.carmodel,
-            'carprice':row.carprice
-        })
+                'id':row.id,
+                'carname':row.carname,
+                'carbrand':row.carbrand,
+                'carmodel':row.carmodel,
+                'carprice':row.carprice
+            })
         return jsonify(datas)
 
     def post(self):
@@ -75,6 +79,31 @@ class CAR(Resource):
             carmodel = fModel,
             carprice = fPrice
             )
+
+        rows = TBCarsWeb.select()    
+        datas=[]
+        for row in rows:
+            datas.append({
+                'id':row.id,
+                'carname':row.carname,
+                'carbrand':row.carbrand,
+                'carmodel':row.carmodel,
+                'carprice':row.carprice
+            })
+        return jsonify(datas)
+
+    def put(self):
+        parserData = reqparse.RequestParser()
+        parserData.add_argument('id')
+        parserData.add_argument('carname')
+        
+        parserAmbilData = parserData.parse_args()
+        fId = parserAmbilData.get('id')
+        fName = parserAmbilData.get('carname')
+
+        if fId and fName:
+            # Lakukan update ke database
+            TBCarsWeb.update(carname=fName).where(TBCarsWeb.id == int(fId)).execute()
 
         rows = TBCarsWeb.select()    
         datas=[]
@@ -117,6 +146,6 @@ if __name__ == '__main__':
     create_tables()
     app.run(
         host = '0.0.0.0',
-        debug = 'True',
+        debug = True,
         port=5012
         )
